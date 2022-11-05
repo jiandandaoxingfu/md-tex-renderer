@@ -66,7 +66,7 @@ function upload_handler() {
       .replace(/\\subsection{(.*?)}/g, '\n### $1\n')
       
     // 匹配所有数学公式，将其中</>号前后加空格，不然会被解析为html标签。
-    // 将每一个公式替换为EQUATION-id，然后使用remarkable解析md，之后在替换回来，
+    // 将每一个公式替换为EQUATION-id，然后使用remarkable解析md，之后再替换回来，
     // 使用MathJax渲染。
     let math_inline = result.match(/\${1,2}.+?\${1,2}/g) || [];
     let math_block = result.match(/\\begin{(equation|align|)\*?}.*?\\end{(equation|align|)\*?}/g) || [];
@@ -94,6 +94,17 @@ function upload_handler() {
     math_block.forEach(math => {
       result = result.replace('EQUATION-TO-REPLACE2', math);
     })
+
+    // 处理标签多次出现的渲染错误
+    result = result.replace(/\\label{}/g, '');
+    let sub_result = result;
+    while (true) {
+      let label = sub_result.match(/\\label{.*?}/);
+      if (!label) break;
+      let idx = label.index + label[0].length;
+      sub_result = result.slice(idx);
+      result = result.slice(0, idx) + sub_result.replaceAll(label[0], '');
+    }
 
     document.getElementById('container').innerHTML = result;
 
