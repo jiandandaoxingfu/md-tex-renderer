@@ -64,18 +64,21 @@ function upload_handler() {
       .replace(/\\chapter{(.*?)}/g, '\n# $1\n')
       .replace(/\\section{(.*?)}/g, '\n## $1\n')
       .replace(/\\subsection{(.*?)}/g, '\n### $1\n')
+      .replace(/\\begin{(lemma|theorem|proposition|proof|abstract)}/g, '\n**$1** &nbsp;&nbsp;')
+      .replace(/\\end{(lemma|theorem|proposition|proof|abstract)}/g, '');
       
     // 匹配所有数学公式，将其中</>号前后加空格，不然会被解析为html标签。
     // 将每一个公式替换为EQUATION-id，然后使用remarkable解析md，之后再替换回来，
     // 使用MathJax渲染。
-    let math_inline = result.match(/\${1,2}.+?\${1,2}/g) || [];
+    // 需要注意 \text{ $...$ }
     let math_block = result.match(/\\begin{(equation|align|)\*?}.*?\\end{(equation|align|)\*?}/g) || [];
-    math_inline = math_inline.map(math => {
-      result = result.replace(math, 'EQUATION-TO-REPLACE1');
-      return math_format(math);
-    })
     math_block = math_block.map(math => {
       result = result.replace(math, 'EQUATION-TO-REPLACE2');
+      return math_format(math);
+    })
+    let math_inline = result.match(/\${1,2}.+?\${1,2}/g) || [];
+    math_inline = math_inline.map(math => {
+      result = result.replace(math, 'EQUATION-TO-REPLACE1');
       return math_format(math);
     })
 
@@ -98,10 +101,11 @@ function upload_handler() {
     // 处理标签多次出现的渲染错误
     result = result.replace(/\\label{}/g, '');
     let sub_result = result;
+    let idx = 0;
     while (true) {
       let label = sub_result.match(/\\label{.*?}/);
       if (!label) break;
-      let idx = label.index + label[0].length;
+      idx += label.index + label[0].length;
       sub_result = result.slice(idx);
       result = result.slice(0, idx) + sub_result.replaceAll(label[0], '');
     }
