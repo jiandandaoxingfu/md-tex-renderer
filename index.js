@@ -38,6 +38,7 @@ function math_format(math) {
     .replace(/\\bm ([a-zA-Z0-9])/g, '\\boldsymbol $1')
     .replace(/\\bm *(\\[a-zA-Z]+)/g, '\\boldsymbol$1')
     .replace(/\\bm *{(.*?)}/g, '\\boldsymbol{$1}')
+    // .replace(/(\\[a-zA-Z]+) *(\\[a-zA-Z_\d]+)/g, '$1{$2}')
 }
 
 function upload_handler() {
@@ -48,11 +49,12 @@ function upload_handler() {
     let result = this.result.replace(/\r\n/g, '\n').replace(/\\bm #1/g, '\\boldsymbol #1');
     // 将自定义的tex命令设置到tex.macros
     let cmds = {};
-    result.match(/\\newcommand{(.*?)}\[\d\]{(.*?)}\n/g)
+    result.match(/\\newcommand{(.*?)}(\[\d+\])?{(.*?)}\n/g)
       ?.forEach( cmd => {
-          let match = cmd.match(/\\newcommand{\\(.*?)}\[(\d)\]{(.*?)}\n/);
-          cmds[match[1]] = match[2] === '0' ? `{${match[3]}}` : [`{${match[3]}}`, 1];
-      });
+          let match = cmd.match(/\\newcommand{\\(.*?)}(\[(\d+)\])?{(.*?)}\n/);
+          cmds[match[1]] = [`{${match[4]}}`, match[3]];
+    });
+    console.log(cmds);
     if(window.MathJax?.config?.tex) {
       window.MathJax.config.tex.macros = cmds;
       window.MathJax.startup.getComponents();
