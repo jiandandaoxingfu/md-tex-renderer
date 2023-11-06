@@ -43,7 +43,7 @@ function math_format(math) {
 
 function upload_handler() {
   let file = document.getElementById('upload-input')?.files?.[0];
-  if( !(file?.name.match(/\.(tex|md)$/)) ) return;
+  if( !(file?.name.match(/\.(tex|md|TEX)$/)) ) return;
   let reader = new FileReader();
   reader.onload = function() {
     let result = this.result.replace(/\r\n/g, '\n').replace(/\\bm #1/g, '\\boldsymbol #1');
