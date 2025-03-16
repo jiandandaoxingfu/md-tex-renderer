@@ -44,8 +44,11 @@ p {
 	width: 90%;
 	max-width: 1200px;
     font-size: 13pt;
-    line-height: 20pt;
     left: 0;
     right: 0;
     margin: 40px auto;
+}
+
+p {
+	line-height: 25px;
 }
