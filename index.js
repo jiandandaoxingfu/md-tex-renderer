@@ -40,7 +40,7 @@ function math_format(math) {
     .replace(/\\bm *{(.*?)}/g, '\\boldsymbol{$1}')
     // .replace(/(\\[a-zA-Z]+) *(\\[a-zA-Z_\d]+)/g, '$1{$2}')
 }
-
+                                   
 function upload_handler() {
   let file = document.getElementById('upload-input')?.files?.[0];
   if( !(file?.name.match(/\.(tex|md|TEX)$/)) ) return;
@@ -54,20 +54,33 @@ function upload_handler() {
           let match = cmd.match(/\\newcommand{\\(.*?)}(\[(\d+)\])?{(.*?)}\n/);
           cmds[match[1]] = [`{${match[4]}}`, match[3]];
     });
-    console.log(cmds);
+    // console.log(cmds);
     if(window.MathJax?.config?.tex) {
       window.MathJax.config.tex.macros = cmds;
       window.MathJax.startup.getComponents();
     }
 
+    let title = result.match(/\\title(\[\])?\{((.|\n)*?)\}/)?.[2] || '';
+    title = title.replace(/(\n|\\LARGE|\\bf|\\Large\\large)/g, '');
+    let author = result.match(/\\author\{(.*?\n.*?)\n/)?.[1] || '';
+    author = author.replace(/\\[a-z]+/g, '')
+                   .replace(/\$.*?\$/g, '')
+                   .replace(/\{(.|\n)*?\}/g, '')
+                   .replace(/[a-z\._]+@([a-z]+\.)+[a-z]+/g, '')
+                   .replace(/[\n{:}^*$\\]/g, '')
+                   .replace(/ ,/g, ',');
+
     result = result.replace(/\n/g, '-AAAAAAA-')
       .replace(/.*?\\begin{document}/, '')
       .replaceAll('dfrac', 'frac')
-      .replace(/\\chapter{(.*?)}/g, '\n# $1\n')
-      .replace(/\\section{(.*?)}/g, '\n## $1\n')
-      .replace(/\\subsection{(.*?)}/g, '\n### $1\n')
+      .replace(/\\chapter{(.*?)}[^$]/g, '\n# $1\n')
+      .replace(/\\section\*?{(.*?)}[^$]/g, '\n## $1\n')
+      .replace(/\\subsection\*?{(.*?)}[^$]/g, '\n### $1\n')
       .replace(/\\begin{(lemma|theorem|proposition|proof|abstract)}/g, '\n**$1** &nbsp;&nbsp;')
-      .replace(/\\end{(lemma|theorem|proposition|proof|abstract)}/g, '');
+      .replace(/\\end{(lemma|theorem|proposition|proof|abstract)}/g, '')
+      .replace(/\\begin{figure}(.|\n)*?\\end{figure}/g, '\n 图片\n ');
+
+    result = `# ${title}\n` + `<center>${author}</center>\n` + result;
       
     // 匹配所有数学公式，将其中</>号前后加空格，不然会被解析为html标签。
     // 将每一个公式替换为EQUATION-id，然后使用remarkable解析md，之后再替换回来，
